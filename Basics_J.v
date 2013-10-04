@@ -115,32 +115,35 @@ Definition admit {T: Type} : T.  Admitted.
 (** この関数はどちらか、もしくは両方が[false]になったときに[true]を返すものである。 *)
 
 Definition nandb (b1:bool) (b2:bool) : bool :=
-  (* FILL IN HERE *) admit.
+  match b1 with
+  |   true => negb b2
+  |   false => true
+  end.
 
 (** 下の定義から[Admitted.]を取り去り、代わりに"[Proof. simpl. reflexivity. Qed.]"で検証できるようなコードを記述しなさい。 *)
 
 Example test_nandb1:               (nandb true false) = true.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 Example test_nandb2:               (nandb false false) = true.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 Example test_nandb3:               (nandb false true) = true.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 Example test_nandb4:               (nandb true true) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 (** [] *)
 
 (** **** 練習問題: ★ (andb3) *)
 Definition andb3 (b1:bool) (b2:bool) (b3:bool) : bool :=
-  (* ここを埋めなさい *) admit.
+  andb b1 (andb b2 b3).
 
 Example test_andb31:                 (andb3 true true true) = true.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 Example test_andb32:                 (andb3 false true true) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 Example test_andb33:                 (andb3 true false true) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 Example test_andb34:                 (andb3 true true false) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 (** [] *)
 
 
@@ -300,12 +303,15 @@ Proof. simpl. reflexivity.  Qed.
     これをCoqでの定義に書き直しなさい。 *)
 
 Fixpoint factorial (n:nat) : nat :=
-  (* FILL IN HERE *) admit.
+  match n with
+  | O => 1
+  | S n' => mult n (factorial n')
+  end.
 
 Example test_factorial1:          (factorial 3) = 6.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 Example test_factorial2:          (factorial 5) = (mult 10 12).
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 (** [] *)
 
 (** ここで紹介する"notation"（表記法）という機能を使うことで、加算、減算、乗算のような数値を扱う式をずっと読みやすく、書きやすくすることができます。 *)
@@ -362,14 +368,14 @@ Proof. simpl. reflexivity.  Qed.
 注：[simpl]タクティックを使ってうまくいかない場合は、代わりに[compute]を試してください。それはよりうまく作られた[simpl]と言えるものですが、そもそもシンプルでエレガントな解が書けていれば、[simpl]で十分に評価できるはずです。 *)
 
 Definition blt_nat (n m : nat) : bool :=
-  (* FILL IN HERE *) admit.
+  negb (beq_nat O (m - n)).
 
 Example test_blt_nat1:             (blt_nat 2 2) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity.  Qed.
 Example test_blt_nat2:             (blt_nat 2 4) = true.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity.  Qed.
 Example test_blt_nat3:             (blt_nat 4 2) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity.  Qed.
 (** [] *)
 
 
@@ -461,7 +467,11 @@ Proof.
 Theorem plus_id_exercise : forall n m o : nat,
   n = m -> m = o -> n + m = m + o.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m o H1 H2.
+  rewrite -> H1.
+  rewrite <- H2.
+  reflexivity.
+Qed.
 (** [] *)
 
 (** Admittedコマンドは、Coqに対して「この証明はあきらめたので、この定理はこれでいいことにしてください」と指示するものです。この機能は、より長い証明をする際に便利です。何か大きな論証をしようとする時、今のところ信用している補足的な命題を示したい時があります。そんな時、[Admitted]を使用すると、その命題を一時的に信用できることにして、それを踏み台にしてより大きな論証を進めることができるのです。そしてそれが完成したのち、あらためて保留していた命題の証明を埋めればいいのです。ただし注意して下さい。[admit]や[Admitted]を使用することは、一時的にドアを開けて、「全て形式的なチェックを受け証明済みの、信用するに足るCoqの世界」から、信用に値しない下界へ足を踏み出していることに他なりません。いつかは戻ってドアを閉めることがお約束です。*)
@@ -479,7 +489,9 @@ Proof.
 Theorem mult_1_plus : forall n m : nat,
   (1 + n) * m = m + (n * m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  rewrite -> plus_1_l.
+  reflexivity. Qed.
 (** [] *)
 
 
@@ -525,7 +537,10 @@ Proof.
 Theorem zero_nbeq_plus_1 : forall n : nat,
   beq_nat 0 (n + 1) = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  destruct n as [| n'].
+    reflexivity.
+  reflexivity. Qed.
 (** [] *)
 
 
@@ -584,7 +599,16 @@ Proof.
 Theorem andb_true_elim2 : forall b c : bool,
   andb b c = true -> c = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b c.
+  destruct c.
+  Case "c = true".
+    reflexivity.
+  Case "c = false".
+    destruct b.
+    SCase "b = true".
+      simpl. intros H. rewrite <- H. reflexivity.
+    SCase "b = false".
+      simpl. intros H. rewrite <- H. reflexivity. Qed.
 (** [] *)
 
 (** Coq上に証明の経過を記述する際、それをどのようにフォーマットするべきか、ということについてちゃんとしたルールというものはありません。行が分割され、証明の各段階が階層を持ち、それをインデントで表現するような場合は特にそうです。しかしながら、複数のサブゴールが作成された部分が明示的に[Case]タクティックでマークされた場合は、それを行頭から記述することにします。そうしておけば、証明は読みやすくなり、それ以外でどんな方針のレイアウトが選ばれても、あまり問題になりません。
@@ -651,17 +675,29 @@ Proof.
 Theorem mult_0_r : forall n:nat,
   n * 0 = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n as [| n'].
+  Case "n = 0".
+    simpl. reflexivity.
+  Case "n = S n'".
+    simpl. rewrite -> IHn'. reflexivity.  Qed.
 
 Theorem plus_n_Sm : forall n m : nat,
   S (n + m) = n + (S m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m. induction n as [| n'].
+  Case "n = 0".
+    simpl. reflexivity.
+  Case "n = S n'".
+    simpl. rewrite -> IHn'. reflexivity.  Qed.
 
 Theorem plus_comm : forall n m : nat,
   n + m = m + n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m. induction n as [| n'].
+  Case "n = 0".
+    simpl. rewrite -> plus_0_r. reflexivity.
+  Case "n = S n'".
+    rewrite <- plus_n_Sm. rewrite <- IHn'. reflexivity.  Qed.
 (** [] *)
 
 Fixpoint double (n:nat) :=
@@ -673,13 +709,17 @@ Fixpoint double (n:nat) :=
 (** **** 練習問題: ★★ (double_plus) *)
 Lemma double_plus : forall n, double n = n + n .
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n as [| n'].
+  Case "n = 0".
+    simpl. reflexivity.
+  Case "n = S n'".
+    simpl. rewrite <- plus_n_Sm. rewrite -> IHn'. reflexivity.  Qed.
 (** [] *)
 
 (** **** 練習問題: ★ (destruct_induction) *)
 (** [destruct]と[induction]の違いを短く説明しなさい。
 
-(* FILL IN HERE *)
+コンストラクタに与えられた引数に関する帰納法が仮定として導入される。
 
 *)
 (** [] *)
@@ -748,25 +788,74 @@ Proof.
 (** [plus_comm]の証明を、非形式的な証明に書き換えなさい。 *)
 
 (** 定理：加法は可換である。
+    すなわち、任意の[n], [m]について以下が成り立つ。
+[[
+      n + m = m + n.
+]]
 
-    Proof: (* FILL IN HERE *)
-[]
-*)
+    Proof: [n] についての帰納法を適用する。
+
+    - まず[n = 0]と置くと、以下のようになる
+[[
+        0 + m = m + 0.
+]]
+      加法に関する定理[plus_0_r]を使って、右辺を書き換えると以下のようになる。
+[[
+        0 + m = m.
+]]
+      これは、[+]の定義から直接導くことができる。
+
+    - 次に[n = S n']と置き、帰納法の仮定を
+[[
+        n' + m = m + n'.
+]]
+      とすると、以下のような式が立つ。
+[[
+        (S n') + m = m + (S n').
+]]
+      ここで、定理[plus_n_Sm]と[+]の定義より、以下のように変形できる。
+[[
+        S (n' + m) = S (m + n').
+]]
+      これは、直後の値について帰納法の仮定が成り立つことを示している。 [] *)
 
 (** **** 練習問題: ★★, optional (beq_nat_refl_informal) *)
 (** 次の証明を、[plus_assoc] の非形式的な証明を参考に書き換えなさい。Coqのタクティックを単に言い換えただけにならないように！
 
    定理：true=beq_nat n n forany n.（任意のnについて、nはnと等しいという命題がtrueとなる）
 
-    Proof: (* FILL IN HERE *)
-[]
- *)
+    Proof: [n] についての帰納法を適用する。
+
+    - まず[n = 0]と置くと、以下のようになる
+[[
+        true = beq_nat O O
+]]
+      これは、[beq_nat]の定義から直接導くことができる。
+
+    - 次に[n = S n']と置き、帰納法の仮定を
+[[
+        true = beq_nat n' n'
+]]
+      とすると、以下のような式が立つ。
+[[
+        true = beq_nat (S n') (S n').
+]]
+      ここで、[beq_nat]の定義より、以下のように変形できる。
+[[
+        true = beq_nat n' n'
+]]
+      これは、帰納法の仮定に等しく、すなわち、直後の値について帰納法の仮定が成り立つことを示している。 [] *)
 
 (** **** 練習問題: ★, optional (beq_nat_refl) *)
 Theorem beq_nat_refl : forall n : nat,
   true = beq_nat n n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [| n'].
+  Case "n = O".
+    reflexivity.
+  Case "n = S n'".
+    simpl. rewrite -> IHn'. reflexivity. Qed.
 (** [] *)
 
 
@@ -817,22 +906,76 @@ Proof.
 Theorem plus_swap : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  rewrite -> plus_assoc.
+  assert (Hmnp: m + (n + p) = m + n + p).
+    Case "Proof of assertion".
+    rewrite -> plus_assoc. reflexivity.
+  rewrite -> Hmnp.
+  assert (Hnp: n + m = m + n).
+    Case "Proof of assertion".
+    rewrite -> plus_comm. reflexivity.
+  rewrite -> Hnp.
+  reflexivity.
+Qed.
 
+(* こういう解き方でも良いはず *)
+Theorem my_plus_swap : forall n m p : nat,
+  n + (m + p) = m + (n + p).
+Proof.
+  intros n m p.
+  rewrite -> (plus_assoc n m p).
+  rewrite -> (plus_assoc m n p).
+  rewrite -> (plus_comm n m).
+  reflexivity.
+Qed.
 
 (** では、乗法が可換であることを証明しましょう。おそらく、補助的な定理を定義し、それを使って全体を証明することになると思います。先ほど証明した[plus_swap]が便利に使えるでしょう。 *)
 
 Theorem mult_comm : forall m n : nat,
  m * n = n * m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros m.
+  induction m as [| m'].
+  Case "m = O".
+    intros n.
+    simpl. rewrite -> mult_0_r. reflexivity.
+  Case "m = S m'".
+    intros n.
+    simpl.
+    assert (H : n * S m' = n + n * m').
+      SCase "Proof of assertion".
+        induction n as [| n'].
+          SSCase "n = O".
+            reflexivity.
+          SSCase "n = S n'".
+            simpl.
+            rewrite -> IHn'.
+            rewrite -> plus_swap. reflexivity.
+    rewrite -> H.
+    rewrite -> IHm'. reflexivity. Qed.
 (** [] *)
 
 (** **** 練習問題: ★★, optional (evenb_n__oddb_Sn) *)
 Theorem evenb_n__oddb_Sn : forall n : nat,
   evenb n = negb (evenb (S n)).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [| n'].
+  Case "n = O".
+    reflexivity.
+  Case "n = S n'".
+    simpl.
+    rewrite -> IHn'.
+    assert (H: forall b, negb (negb b) = b).
+      SCase "Proof of assertion".
+        destruct b.
+          SSCase "b = true".
+            reflexivity.
+          SSCase "b = false".
+            reflexivity.
+    rewrite -> H.
+    simpl. reflexivity. Qed.
 (** [] *)
 
 
@@ -843,32 +986,55 @@ Proof.
 
 Theorem ble_nat_refl : forall n:nat,
   true = ble_nat n n.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* induction *)
+  intros n.
+  induction n as [| n']; simpl.
+  Case "n = O".
+    reflexivity.
+  Case "n = S n'".
+    rewrite <- IHn'. reflexivity. Qed.
 
 Theorem zero_nbeq_S : forall n:nat,
   beq_nat 0 (S n) = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* simpl *)
+  simpl. reflexivity. Qed.
 
 Theorem andb_false_r : forall b : bool,
   andb b false = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* destruct *)
+  intros b.
+  destruct b.
+  Case "b = true".
+    reflexivity.
+  Case "b = false".
+    reflexivity. Qed.
 
 Theorem plus_ble_compat_l : forall n m p : nat,
   ble_nat n m = true -> ble_nat (p + n) (p + m) = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* induction on p *)
+  intros n m p H.
+  induction p as [| p']; simpl.
+  Case "p = O".
+    assumption.
+  Case "p = S p'".
+    assumption. Qed.
 
 Theorem S_nbeq_0 : forall n:nat,
   beq_nat (S n) 0 = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* simpl *)
+  simpl. reflexivity. Qed.
 
 Theorem mult_1_l : forall n:nat, 1 * n = n.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* induction on n *)
+  intros n.
+  induction n as [| n'].
+  Case "n = O".
+    reflexivity.
+  Case "n = S n'".
+    simpl.
+    simpl in IHn'.
+    rewrite -> IHn'.
+    reflexivity. Qed.
 
 Theorem all3_spec : forall b c : bool,
     orb
@@ -876,18 +1042,49 @@ Theorem all3_spec : forall b c : bool,
       (orb (negb b)
                (negb c))
   = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* destrcution of b c *)
+  intros b c.
+  destruct b.
+  Case "b = true".
+    destruct c.
+    SCase "c = true".
+      simpl. reflexivity.
+    SCase "c = false".
+      simpl. reflexivity.
+  Case "b = false".
+    destruct c.
+    SCase "c = true".
+      simpl. reflexivity.
+    SCase "c = false".
+      simpl. reflexivity.
+  Qed.
 
 Theorem mult_plus_distr_r : forall n m p : nat,
   (n + m) * p = (n * p) + (m * p).
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* induction *)
+  intros n m p.
+  induction n as [| n'].
+  Case "n = O".
+    simpl. reflexivity.
+  Case "n = S n'".
+    simpl.
+    rewrite -> IHn'.
+    rewrite -> plus_assoc.
+    reflexivity. Qed.
 
 Theorem mult_assoc : forall n m p : nat,
   n * (m * p) = (n * m) * p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. (* induction *)
+  intros n m p.
+  induction n as [| n'].
+  Case "n = O".
+    simpl. reflexivity.
+  Case "n = S n'".
+    simpl.
+    rewrite -> IHn'.
+    rewrite mult_plus_distr_r.
+    reflexivity. Qed.
 (** [] *)
 
 (** **** 練習問題: ★★, optional (plus_swap') *)
@@ -899,7 +1096,15 @@ Proof.
 Theorem plus_swap' : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  rewrite -> plus_assoc.
+  rewrite -> plus_assoc.
+  replace (n + m) with (m + n).
+    Case "Main proof".
+      reflexivity.
+    Case "Proof of replace".
+      rewrite -> plus_comm.
+      reflexivity. Qed.
 (** [] *)
 
 
@@ -923,7 +1128,39 @@ Proof.
     (c) 最後にbで作成したインクリメント関数と、2進→自然数関数が可換であることを証明しなさい。これを証明するには、bin値をまずインクリメントしたものを自然数に変換したものが、先に自然数変換した後にインクリメントしたものの値と等しいことを証明すればよい。
 *)
 
-(* FILL IN HERE *)
+Inductive bin : Type :=
+  | BO : bin          (* zero *)
+  | T0 : bin -> bin   (* 2 * n *)
+  | T1 : bin -> bin.  (* 2 * n + 1 *)
+
+Fixpoint increment (n:bin) : bin :=
+  match n with
+  | BO => T1 BO
+  | T0 n' => T1 n'
+  | T1 n' => T0 (increment n')
+  end.
+
+Fixpoint nat_of_bin (n:bin) : nat :=
+  match n with
+  | BO => O
+  | T0 n' => 2 * (nat_of_bin n')
+  | T1 n' => 1 + 2 * (nat_of_bin n')
+  end.
+
+Theorem increment_int_bin_comm : forall n,
+  nat_of_bin (increment n) = 1 + (nat_of_bin n).
+Proof.
+  intros n.
+  induction n as [| n' | n'].
+  Case "n = BO".
+    simpl. reflexivity.
+  Case "n = T0 n'".
+    simpl. reflexivity.
+  Case "n = T1 n'".
+    simpl. rewrite -> IHn'.
+    rewrite -> plus_0_r.
+    rewrite -> plus_0_r. simpl.
+    rewrite <- plus_n_Sm. reflexivity. Qed.
 (** [] *)
 
 (** **** 練習問題: ★★★★★ (binary_inverse) *)
@@ -939,6 +1176,51 @@ Proof.
     (c) 2進数を引数として取り、それを一度自然数に変換した後、また2進数に変換したものを返すnormalize関数を作成し、証明しなさい。
 *)
 
+Fixpoint bin_of_nat (n:nat) : bin :=
+  match n with
+    | O => BO
+    | S n' => increment (bin_of_nat n')
+  end.
+
+Theorem nat_of_bin_bin_of_nat_id : forall n,
+  nat_of_bin (bin_of_nat n) = n.
+Proof.
+  intros n.
+  induction n as [| n'].
+  Case "n = O".
+    simpl. reflexivity.
+  Case "n = S n'".
+    simpl.
+    rewrite -> increment_int_bin_comm.
+    rewrite IHn'. reflexivity. Qed.
+
+Eval simpl in (nat_of_bin BO).
+Eval simpl in (nat_of_bin (T0 BO)).
+  (* BO も (T0 BO) も (T0 (T0 BO)) も自然数に変換すると 0 に等しくなる *)
+
+Definition normalize (n:bin) : bin := bin_of_nat (nat_of_bin n).
+
+Theorem normalize_idem : forall n,
+  normalize (normalize n) = normalize n.
+Proof.
+  intros n.
+  unfold normalize.
+  rewrite -> nat_of_bin_bin_of_nat_id.
+  reflexivity. Qed.
+
+Theorem nat_of_bin_normalize_eq_nat_of_bin : forall n,
+  nat_of_bin (normalize n) = nat_of_bin n.
+Proof.
+  intros n.
+  unfold normalize.
+  rewrite -> nat_of_bin_bin_of_nat_id.
+  reflexivity. Qed.
+
+Theorem bin_of_nat_nat_of_bin_eq_normalize : forall n,
+  bin_of_nat (nat_of_bin n) = normalize n.
+Proof.
+  reflexivity. Qed.
+
 (* FILL IN HERE *)
 
 
@@ -947,6 +1229,15 @@ Proof.
 
 これを具体的に感じるため、[Fixpoint]で定義された、より「微妙な」関数の書き方を考えてみましょう（自然数に関する簡単な関数でかまいません）。それが全ての入力で停止することと、Coqがそれを、この制限のため受け入れてくれないことを確認しなさい。 *)
 
-(* FILL IN HERE *)
+(*
+Fixpoint first_of_two (n m:nat) :=
+  if ble_nat n m then n else first_of_two n (S m).
+
+Fixpoint maccarthy_91 (n:nat) :=
+  match ble_nat n 100 with
+  | true => maccarthy_91 (maccarthy_91 (n + 11))
+  | false => n - 10
+  end.
+*)
 (** [] *)
 
