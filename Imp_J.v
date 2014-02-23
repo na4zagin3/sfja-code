@@ -722,7 +722,39 @@ Proof.
     それが健全であることを証明しなさい。
     ここまで見てきたタクティカルを使って証明を可能な限りエレガントにしなさい。*)
 
-(* FILL IN HERE *)
+Tactic Notation "bexp_cases" tactic(first) ident(c) :=
+  first;
+  [ Case_aux c "BTrue" | Case_aux c "BFalse"
+  | Case_aux c "BEq" | Case_aux c "BLe"
+  | Case_aux c "BNot" | Case_aux c "BAnd" ].
+
+Fixpoint optimize_0plus_b (b:bexp) : bexp :=
+  match b with
+  | BTrue =>
+      BTrue
+  | BFalse =>
+      BFalse
+  | BEq e1 e2 =>
+      BEq (optimize_0plus e1) (optimize_0plus e2)
+  | BLe e1 e2 =>
+      BLe  (optimize_0plus e1) (optimize_0plus e2)
+  | BNot b =>
+      BNot (optimize_0plus_b b)
+  | BAnd b1 b2 =>
+      BAnd (optimize_0plus_b b1) (optimize_0plus_b b2)
+  end.
+
+Theorem optimize_0plus_b_sound: forall (b:bexp),
+  beval (optimize_0plus_b b) = beval b.
+Proof.
+  intro.
+  bexp_cases (induction b) SCase;
+    simpl;
+      try (rewrite optimize_0plus_sound; rewrite optimize_0plus_sound);
+      try (rewrite IHb);
+      try (rewrite IHb1; rewrite IHb2);
+      try (reflexivity).
+Qed.
 (** [] *)
 
 (* **** Exercise: 4 stars, optional (optimizer) *)
@@ -731,15 +763,27 @@ Proof.
     [optimize_0plus] function is only one of many imaginable
     optimizations on arithmetic and boolean expressions.  Write a more
     sophisticated optimizer and prove it correct.
-
-(* FILL IN HERE *)
 *)
 (** 設計練習: 定義した[optimize_0plus]関数で実装された最適化は、
     算術式やブール式に対して考えられるいろいろな最適化の単なる1つに過ぎません。
     より洗練された最適化関数を記述し、その正しさを証明しなさい。
-
-(* FILL IN HERE *)
 *)
+Fixpoint optimize_AndFalse (b: bexp) :=
+  match b with
+    | BAnd BFalse _ => BFalse
+    | x => x
+  end.
+
+Theorem optimize_AndFalse_sound : forall (b: bexp),
+  beval (optimize_AndFalse b) = beval b.
+Proof.
+  intros b.
+  bexp_cases (induction b) Case;
+    try reflexivity.
+  simpl.
+    bexp_cases (induction b1) SCase;
+      try reflexivity.
+Qed.
 (** [] *)
 
 (* ####################################################### *)
@@ -1000,11 +1044,62 @@ Qed.
 (** 関係[bevalR]を[aevalR]と同じスタイルで記述し、
     それが[beval]と同値であることを証明しなさい。 *)
 
-(*
-Inductive bevalR:
-(* FILL IN HERE *)
+Inductive bevalR: bexp -> bool -> Prop :=
+  | E_BTrue : bevalR BTrue true
+  | E_BFalse : bevalR BFalse false
+  | E_BEq : forall (e1 e2: aexp) (n1 n2: nat),
+    aevalR e1 n1 ->
+    aevalR e2 n2 ->
+    bevalR (BEq e1 e2) (beq_nat n1 n2)
+  | E_BLe : forall (e1 e2: aexp) (n1 n2: nat),
+    aevalR e1 n1 ->
+    aevalR e2 n2 ->
+    bevalR (BLe e1 e2) (ble_nat n1 n2)
+  | E_BNot : forall (e: bexp) (b: bool),
+    bevalR e b ->
+    bevalR (BNot e) (negb b)
+  | E_BAnd : forall (e1 e2: bexp) (b1 b2: bool),
+    bevalR e1 b1 ->
+    bevalR e2 b2 ->
+    bevalR (BAnd e1 e2) (andb b1 b2).
+
+Theorem beval_e_b__bevalR_e_eq_b : forall e b,
+  bevalR e b -> beval e = b.
+Proof.
+    intros e b H.
+    induction H;
+      simpl;
+      try (
+        apply aeval_iff_aevalR' in H;
+        apply aeval_iff_aevalR' in H0
+      );
+      subst;
+      reflexivity.
+Qed.
+
+Theorem beval_e_b_iff_bevalR_e_eq_b : forall e b,
+  bevalR e b <-> beval e = b.
+Proof.
+  split.
+  Case "->". 
+    apply beval_e_b__bevalR_e_eq_b.
+  Case "<-". 
+(*    intros H. *)
+    generalize dependent b.
+    induction e;
+      try (
+        intros b H;
+        simpl in H;
+        rewrite <- H;
+        constructor
+      );
+      try apply aeval_iff_aevalR;
+        try apply IHe;
+        try apply IHe1;
+        try apply IHe2;
+        reflexivity.
+Qed.
 (** [] *)
-*)
 
 (* For the definitions of evaluation for arithmetic and boolean
     expressions, the choice of whether to use functional or relational
@@ -1217,7 +1312,14 @@ Proof.
 Theorem beq_id_eq : forall i1 i2,
   true = beq_id i1 i2 -> i1 = i2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros i1 i2 H.
+  destruct i1.
+  destruct i2.
+  unfold beq_id in H.
+  apply beq_nat_eq in H.
+  rewrite <- H.
+  reflexivity.
+Qed.
 (** [] *)
 
 (* **** Exercise: 1 star, optional (beq_id_false_not_eq) *)

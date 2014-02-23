@@ -557,7 +557,14 @@ Definition okd_before2 := forall d1 d2 d3,
 (** **** 練習問題: ★, optional (okd_before2_valid) *)
 Theorem okd_before2_valid : okd_before2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold okd_before2.
+  intros.
+  apply okd_before with (d2:=d2).
+    apply okd_before with (d2:=d3).
+      assumption.
+    assumption.
+  assumption.
+  Qed.
 (** [] *)
 
 (* But what should the corresponding proof object look like?

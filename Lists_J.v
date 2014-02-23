@@ -1124,6 +1124,19 @@ Proof.
 *)
 
 (* FILL IN HERE *)
+Theorem snoc_cons_app : forall (l1 l2 : natlist) (n : nat),
+                          snoc l1 n ++ l2 = l1 ++ cons n l2.
+Proof.
+  intros l1 l2 n.
+  induction l1 as [| n' l1'].
+  Case "l1 = []".
+    reflexivity.
+  Case "l1 = n' :: l1'".
+    simpl.
+    rewrite snoc_append.
+    rewrite app_ass.
+    reflexivity.
+Qed.
 (** [] *)
 
 (* **** Exercise: 2 stars, optional (bag_proofs) *)
@@ -1138,7 +1151,7 @@ Theorem count_member_nonzero : forall (s : bag),
   ble_nat 1 (count 1 (1 :: s)) = true.
 Proof.
   intros.
-  destruct s; reflexivity. Qed.
+  reflexivity. Qed.
 
 (* The following lemma about [ble_nat] might help you in the next proof. *)
 (** 以下の [ble_nat] に関する補題は、この次の証明に使えるかもしれません。 *)
@@ -1194,6 +1207,30 @@ There is a hard way and an easy way to solve this exercise.
 
 この練習問題には簡単な解法と難しい解法があります。
 *)
+
+Module REV_INJECTIVE.
+Require Import List.
+
+Theorem rev_injetive :
+    forall X (l1 l2 : list X), rev l1 = rev l2 -> l1 = l2.
+Proof.
+  intros X l1 l2 H.
+  rewrite <- (rev_involutive l1).
+  rewrite <- (rev_involutive l2).
+  rewrite H.
+  reflexivity.
+Qed.
+End REV_INJECTIVE.
+
+Theorem rev_injetive :
+    forall (l1 l2 : natlist), rev l1 = rev l2 -> l1 = l2.
+Proof.
+  intros l1 l2 H.
+  rewrite <- (rev_involutive l1).
+  rewrite <- (rev_involutive l2).
+  rewrite H.
+  reflexivity.
+Qed.
 
 (*
 Theorem snoc_l_t_neq_nil :
