@@ -71,13 +71,25 @@ Proof.
 (** **** 練習問題:★★, optional *)
 (** Logic_J.v に定義された [total_relation] が部分関数ではないことを示しなさい。 *)
 
-(* FILL IN HERE *)
+Theorem total_relation_not_a_partial_function :
+  ~ (partial_function total_relation).
+Proof.
+  unfold not. unfold partial_function. intros H.
+  assert (0 = 1) as Nonsense.
+   Case "Proof of assertion".
+   apply (H 0 0 1); apply nat_pair.
+  inversion Nonsense.   Qed.
 (** [] *)
 
 (** **** 練習問題:★★, optional *)
 (** Logic_J.v に定義された [empty_relation] が部分関数であることを示しなさい。 *)
 
-(* FILL IN HERE *)
+Theorem empty_relation_a_partial_function :
+  partial_function empty_relation.
+Proof.
+  unfold partial_function.
+  intros x y1 y2 H.
+  inversion H. Qed.
 (** [] *)
 
 (** 集合[X]上の反射的(_reflexive_)関係とは、[X]のすべての要素について、成立する関係です。
@@ -128,7 +140,8 @@ Proof.
   unfold lt. unfold transitive.
   intros n m o Hnm Hmo.
   induction Hmo as [| m' Hm'o].
-    (* FILL IN HERE *) Admitted.
+    induction Hnm as [| n' Hn'm]; constructor; constructor; assumption.
+  constructor; assumption. Qed.
 (** [] *)
 
 (** **** 練習問題:★★, optional *)
@@ -140,7 +153,13 @@ Proof.
   unfold lt. unfold transitive.
   intros n m o Hnm Hmo.
   induction o as [| o'].
-  (* FILL IN HERE *) Admitted.
+    inversion Hmo.
+  inversion Hmo.
+    rewrite <- H0.
+    constructor; assumption.
+  constructor.
+  apply IHo'.
+  assumption. Qed.
 (** [] *)
 
 (** [le]の推移性は、同様に、後に(つまり以下の反対称性の証明において)
@@ -156,7 +175,14 @@ Proof.
 Theorem le_S_n : forall n m,
   (S n <= S m) -> (n <= m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m H.
+  induction m.
+    inversion H.
+      constructor.
+    inversion H1.
+  inversion H.
+    constructor.
+  constructor; apply IHm; assumption. Qed.
 (** [] *)
 
 (** **** 練習問題:★★, optional(le_Sn_n_inf) *)
@@ -176,7 +202,12 @@ Proof.
 Theorem le_Sn_n : forall n,
   ~ (S n <= n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n H.
+  induction n.
+    inversion H.
+  apply IHn.
+  apply le_S_n.
+  assumption.
 (** [] *)
 
 (** 反射性と推移性は後の章で必要となる主要概念ですが、Coq で関係を扱う練習をもう少ししましょう。
@@ -191,7 +222,13 @@ Definition symmetric {X: Type} (R: relation X) :=
 Theorem le_not_symmetric :
   ~ (symmetric le).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold symmetric.
+  intros H.
+  assert (1 <= 0) as nonsense.
+    apply H.
+    constructor.
+    constructor.
+  inversion nonsense. Qed.
 (** [] *)
 
 (** 関係[R]が反対称的(_antisymmetric_)であるとは、[R a b]かつ[R b a]ならば
@@ -206,7 +243,26 @@ Definition antisymmetric {X: Type} (R: relation X) :=
 Theorem le_antisymmetric :
   antisymmetric le.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold antisymmetric.
+  intros n m Hnm Hmn.
+  generalize dependent m.
+  induction n.
+    intros.
+    inversion Hmn.
+    reflexivity.
+  intros.
+  inversion Hnm.
+    reflexivity.
+  assert (n = m0 -> S n = S m0).
+    intros Hnm0.
+    rewrite Hnm0.
+    reflexivity.
+  apply H1.
+  rewrite <- H0 in Hnm.
+  rewrite <- H0 in Hmn.
+  apply le_S_n in Hnm.
+  apply le_S_n in Hmn.
+  apply IHn; assumption. Qed.
 (** [] *)
 
 (** **** 練習問題:★★, optional *)
@@ -215,7 +271,26 @@ Theorem le_step : forall n m p,
   m <= S p ->
   n <= p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold lt.
+  intros n m p Hnm Hmp.
+  generalize dependent m.
+  induction p.
+    intros.
+    inversion Hmp.
+      rewrite H in Hnm.
+      inversion Hnm.
+        constructor.
+      inversion H1.
+    inversion H0.
+    rewrite H1 in Hnm.
+    inversion Hnm.
+  intros.
+  inversion Hmp.
+    rewrite H in Hnm.
+    apply Sn_le_Sm__n_le_m in Hnm.
+    assumption.
+  constructor.
+  apply IHp with m; assumption. Qed.
 (** [] *)
 
 (** 関係が同値関係(_equivalence_)であるとは、その関係が、
@@ -326,7 +401,16 @@ Theorem rsc_trans :
       refl_step_closure R y z ->
       refl_step_closure R x z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X R x y z HRxy HRyz.
+  generalize dependent z.
+  induction HRxy as [| x' y'].
+    intros.
+    assumption.
+  intros.
+  apply rsc_step with y'.
+    assumption.
+  apply IHHRxy.
+  assumption. Qed.
 (** [] *)
 
 (** そして、反射推移閉包の2つの定義が同じ関係を定義していることを証明するために、
@@ -337,5 +421,18 @@ Theorem rtc_rsc_coincide :
          forall (X:Type) (R: relation X) (x y : X),
   clos_refl_trans R x y <-> refl_step_closure R x y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X R x y. split.
+    intros H.
+    induction H.
+        apply rsc_step with y.
+          assumption.
+        constructor.
+      constructor.
+    apply rsc_trans with y; assumption.
+  intros H.
+  induction H.
+    apply rt_refl.
+  apply rt_trans with y.
+    apply rt_step; assumption.
+  assumption. Qed.
 (** [] *)
