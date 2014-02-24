@@ -2981,22 +2981,36 @@ Inductive sinstr : Type :=
     これは重要でないという意味です。
     しかし正当性の証明をするときは、いくつかの選択のほうが証明をより簡単にすることに気づくかもしれません。*)
 
+Definition dyadic_operator (f : nat -> nat -> nat) (stack : list nat) :=
+    match stack with
+    | [] => []
+    | [_] => []
+    | (b::a::stack') => f a b :: stack'
+    end.
+
 Fixpoint s_execute (st : state) (stack : list nat)
                    (prog : list sinstr)
                  : list nat :=
-(* FILL IN HERE *) admit.
+  match prog with
+  | [] => stack
+  | SPush n::prog' => s_execute st (n::stack) prog'
+  | SLoad x::prog' => s_execute st (st x::stack) prog'
+  | SPlus::prog' => s_execute st (dyadic_operator plus stack) prog'
+  | SMinus::prog' => s_execute st (dyadic_operator minus stack) prog'
+  | SMult::prog' => s_execute st (dyadic_operator mult stack) prog'
+  end.
 
 Example s_execute1 :
      s_execute empty_state []
        [SPush 5, SPush 3, SPush 1, SMinus]
    = [2, 5].
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example s_execute2 :
      s_execute (update empty_state X 3) [3,4]
        [SPush 4, SLoad X, SMult, SPlus]
    = [15, 4].
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (*  Next, write a function which compiles an [aexp] into a stack
     machine program. The effect of running the program should be the
@@ -3005,14 +3019,18 @@ Example s_execute2 :
     このプログラムを実行する影響は、もとの式の値をスタックに積むことと同じでなければなりません。*)
 
 Fixpoint s_compile (e : aexp) : list sinstr :=
-(* FILL IN HERE *) admit.
+  match e with
+  | ANum n => [SPush n]
+  | AId x => [SLoad x]
+  | APlus e1 e2 => s_compile e1 ++ s_compile e2 ++ [SPlus]
+  | AMinus e1 e2 => s_compile e1 ++ s_compile e2 ++ [SMinus]
+  | AMult e1 e2 => s_compile e1 ++ s_compile e2 ++ [SMult]
+  end.
 
-(*
 Example s_compile1 :
     s_compile (AMinus (AId X) (AMult (ANum 2) (AId Y)))
   = [SLoad X, SPush 2, SLoad Y, SMult, SMinus].
 Proof. reflexivity. Qed.
-*)
 
 (*  Finally, prove the following theorem, stating that the [compile]
     function behaves correctly.  You will need to start by stating a
@@ -3022,9 +3040,41 @@ Proof. reflexivity. Qed.
 
 (* FILL IN HERE *)
 
+Theorem s_execute_app_adjoint : forall (st : state) (p1 p2 : list sinstr) (stack : list nat),
+  s_execute st stack (p1 ++ p2) =
+  s_execute st (s_execute st stack p1) p2.
+Proof.
+  intros st p1 p2 s.
+  generalize dependent s.
+  generalize dependent p2.
+  induction p1 as [|p p1'].
+  Case "p1 = []".
+    reflexivity.
+  Case "p1 = p :: p1'".
+    intros.
+    simpl.
+    destruct p; apply IHp1'. Qed.
+
+Theorem s_compile_correct_general : forall (st : state) (e : aexp) (stack : list nat),
+  s_execute st stack (s_compile e) = (aeval st e :: stack).
+Proof.
+  intros st e s.
+  generalize dependent s.
+  aexp_cases (induction e) Case;
+    try reflexivity;
+    try(
+        intros s;
+        simpl;
+        rewrite s_execute_app_adjoint;
+        rewrite IHe1;
+        rewrite s_execute_app_adjoint;
+        rewrite IHe2;
+        reflexivity). Qed.
+
 Theorem s_compile_correct : forall (st : state) (e : aexp),
   s_execute st [] (s_compile e) = [ aeval st e ].
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros st e.
+  apply s_compile_correct_general. Qed.
 (** [] *)
 
