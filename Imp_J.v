@@ -780,6 +780,7 @@ Proof.
   intros b.
   bexp_cases (induction b) Case;
     try reflexivity.
+  Case "BAnd".
   simpl.
     bexp_cases (induction b1) SCase;
       try reflexivity.
@@ -1327,7 +1328,15 @@ Qed.
 Theorem beq_id_false_not_eq : forall i1 i2,
   beq_id i1 i2 = false -> i1 <> i2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros i1 i2 H.
+  destruct i1.
+  destruct i2.
+  unfold beq_id in H.
+  apply beq_nat_false in H.
+  contradict H.
+  inversion H.
+  auto.
+Qed.
 (** [] *)
 
 (* **** Exercise: 1 star, optional (not_eq_beq_id_false) *)
@@ -1335,7 +1344,14 @@ Proof.
 Theorem not_eq_beq_id_false : forall i1 i2,
   i1 <> i2 -> beq_id i1 i2 = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros i1 i2 H.
+  unfold beq_id.
+  destruct i1 as [n1].
+  destruct i2 as [n2].
+  apply not_eq_beq_false.
+  contradict H.
+  eauto.
+Qed.
 (** [] *)
 
 (* **** Exercise: 1 star, optional (beq_id_sym) *)
@@ -1343,7 +1359,12 @@ Proof.
 Theorem beq_id_sym: forall i1 i2,
   beq_id i1 i2 = beq_id i2 i1.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros i1 i2.
+  destruct i1 as [n1].
+  destruct i2 as [n2].
+  unfold beq_id.
+  apply beq_nat_sym.
+Qed.
 (** [] *)
 
 End Id.
@@ -1378,7 +1399,11 @@ Definition update (st : state) (X:id) (n : nat) : state :=
 Theorem update_eq : forall n X st,
   (update st X n) X = n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n X st.
+  unfold update.
+  rewrite <- beq_id_refl.
+  reflexivity.
+Qed.
 (** [] *)
 
 (* **** Exercise: 2 stars, optional (update_neq) *)
@@ -1387,7 +1412,11 @@ Theorem update_neq : forall V2 V1 n st,
   beq_id V2 V1 = false ->
   (update st V2 n) V1 = (st V1).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros V2 V1 n st H.
+  unfold update.
+  rewrite H.
+  reflexivity.
+Qed.
 (** [] *)
 
 (* **** Exercise: 2 stars, optional (update_example) *)
@@ -1400,7 +1429,15 @@ Proof.
 Theorem update_example : forall (n:nat),
   (update empty_state (Id 2) n) (Id 3) = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro n.
+  assert (Hes: empty_state (Id 3) = 0).
+    unfold empty_state.
+    reflexivity.
+  apply update_neq.
+  apply not_eq_beq_id_false.
+  intros H0.
+  inversion H0.
+Qed.
 (** [] *)
 
 (* **** Exercise: 2 stars (update_shadow) *)
@@ -1408,7 +1445,20 @@ Proof.
 Theorem update_shadow : forall x1 x2 k1 k2 (f : state),
    (update  (update f k2 x1) k2 x2) k1 = (update f k2 x2) k1.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros x1 x2 k1 k2 f.
+  remember (beq_id k1 k2) as H.
+  destruct H.
+    apply beq_id_eq in HeqH.
+    rewrite HeqH.
+    rewrite update_eq.
+    rewrite update_eq.
+    reflexivity.
+  apply eq_sym in HeqH.
+  rewrite beq_id_sym in HeqH.
+  unfold update.
+  rewrite HeqH.
+  reflexivity.
+Qed.
 (** [] *)
 
 (* **** Exercise: 2 stars, optional (update_same) *)
@@ -1417,7 +1467,17 @@ Theorem update_same : forall x1 k1 k2 (f : state),
   f k1 = x1 ->
   (update f k1 x1) k2 = f k2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros x1 k1 k2 f H.
+  remember (beq_id k1 k2) as Hk.
+  destruct Hk.
+    apply beq_id_eq in HeqHk.
+    rewrite <- HeqHk.
+    rewrite H.
+    apply update_eq.
+  apply eq_sym in HeqHk.
+  apply update_neq.
+  assumption.
+Qed.
 (** [] *)
 
 (* **** Exercise: 2 stars, optional (update_permute) *)
@@ -1426,7 +1486,26 @@ Theorem update_permute : forall x1 x2 k1 k2 k3 f,
   beq_id k2 k1 = false ->
   (update (update f k2 x1) k1 x2) k3 = (update (update f k1 x2) k2 x1) k3.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros x1 x2 k1 k2 k3 f H.
+  remember (beq_id k1 k3) as k1k3.
+  remember (beq_id k2 k3) as k2k3.
+  destruct k1k3.
+    unfold update.
+    rewrite <- Heqk1k3.
+    destruct k2k3.
+      apply beq_id_false_not_eq in H.
+      apply beq_id_eq in Heqk1k3.
+      apply beq_id_eq in Heqk2k3.
+      contradict H.
+      rewrite Heqk1k3.
+      rewrite Heqk2k3.
+      reflexivity.
+    rewrite <- Heqk2k3.
+    reflexivity.
+  unfold update.
+  rewrite <- Heqk1k3.
+  reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################### *)
@@ -1867,14 +1946,17 @@ Eval compute in
     Imp プログラムを書きなさい。下に示したテストを満たすことを確認しなさい。 *)
 
 Definition pup_to_n : com :=
-  (* FILL IN HERE *) admit.
+  Y ::= ANum 0;
+  WHILE BNot (BEq (AId X) (ANum 0)) DO
+    Y ::= APlus (AId Y) (AId X);
+    X ::= (AMinus (AId X) (ANum 1))
+  END.
 
-(*
+
 Example pup_to_n_1 :
   test_ceval (update empty_state X 5) pup_to_n
   = Some (0, 15, 0).
 Proof. reflexivity. Qed.
-*)
 (** [] *)
 
 (*  **** Exercise: 2 stars, optional (peven) *)
@@ -1886,6 +1968,21 @@ Proof. reflexivity. Qed.
     [While] プログラムを書きなさい。テストには [ceval_test] を使いなさい。 *)
 
 (* FILL IN HERE *)
+Definition peven : com :=
+  WHILE (BLe (ANum 2) (AId X)) DO
+    X ::= (AMinus (AId X) (ANum 2))
+  END;
+  Z ::= (AId X).
+
+Example peven_2 :
+  test_ceval (update empty_state X 2) peven
+  = Some (0, 0, 0).
+Proof. reflexivity. Qed.
+
+Example peven_3 :
+  test_ceval (update empty_state X 3) peven
+  = Some (1, 0, 1).
+Proof. reflexivity. Qed.
 (** [] *)
 
 (* #################################### *)
@@ -2064,7 +2161,11 @@ Example ceval_example2:
     (X ::= ANum 0; Y ::= ANum 1; Z ::= ANum 2) / empty_state ||
     (update (update (update empty_state X 0) Y 1) Z 2).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply E_Seq with (update empty_state X 0).
+    apply E_Ass. reflexivity.
+  apply E_Seq with (update (update empty_state X 0) Y 1).
+    apply E_Ass. reflexivity.
+  apply E_Ass. reflexivity. Qed.
 (** [] *)
 
 (* ################################################################ *)
@@ -2219,7 +2320,54 @@ Theorem ceval__ceval_step: forall c st st',
 Proof.
   intros c st st' Hce.
   ceval_cases (induction Hce) Case.
-  (* FILL IN HERE *) Admitted.
+
+  Case "E_Skip".
+    exists 1. reflexivity.
+  Case "E_Ass".
+    exists 1.
+    unfold ceval_step.
+    rewrite H. reflexivity.
+  Case "E_Seq".
+    destruct IHHce1 as [i1 IHHce1'].
+    destruct IHHce2 as [i2 IHHce2'].
+    apply ceval_step_more with (i2 := i1+i2) in IHHce1'; [|omega].
+    apply ceval_step_more with (i2 := i1+i2) in IHHce2'; [|omega].
+    exists (S (i1 + i2)).
+    simpl.
+    rewrite IHHce1'.
+    rewrite IHHce2'.
+    reflexivity.
+  Case "E_IfTrue".
+    destruct IHHce as [i IHHce].
+    exists (S i).
+    simpl.
+    rewrite H.
+    rewrite IHHce.
+    reflexivity.
+  Case "E_IfFalse".
+    destruct IHHce as [i IHHce].
+    exists (S i).
+    simpl.
+    rewrite H.
+    rewrite IHHce.
+    reflexivity.
+  Case "E_WhileEnd".
+    exists 1.
+    simpl.
+    rewrite H.
+    reflexivity.
+  Case "E_WhileLoop".
+    (* start copy from   *)
+    destruct IHHce1 as [i1 IHHce1'].
+    destruct IHHce2 as [i2 IHHce2'].
+    apply ceval_step_more with (i2 := i1+i2) in IHHce1'; [|omega].
+    apply ceval_step_more with (i2 := i1+i2) in IHHce2'; [|omega].
+    exists (S (i1 + i2)).
+    simpl.
+    rewrite H.
+    rewrite IHHce1'.
+    rewrite IHHce2'.
+    reflexivity. Qed.
 (** [] *)
 
 Theorem ceval_and_ceval_step_coincide: forall c st st',
@@ -2350,6 +2498,15 @@ Proof.
 (** XtimesYinZ の Imp プログラムの仕様を書いて証明しなさい。*)
 
 (* FILL IN HERE *)
+Theorem XtimesYinZ_spec : forall st n m st',
+  st X = n ->
+  st Y = m ->
+  XtimesYinZ / st || st' ->
+  st' Z = n * m.
+Proof.
+  intros st n m st' HX HY Heval.
+  inversion Heval. subst.
+  apply update_eq. Qed.
 (** [] *)
 
 (*  **** Exercise: 3 stars, recommended (loop_never_stops) *)
@@ -2363,7 +2520,30 @@ Proof.
      loopdef terminates.  Most of the cases are immediately
      contradictory (and so can be solved in one step with
      [inversion]). *)
-  (* FILL IN HERE *) Admitted.
+  (* FILL IN HERE *)
+  ceval_cases (inversion contra) Case.
+  Case "E_Skip".
+    subst.
+    inversion H.
+  Case "E_Ass".
+    subst.
+    inversion H0.
+  Case "E_Seq".
+    subst.
+    inversion H1.
+  Case "E_IfTrue".
+    subst.
+    inversion H1.
+  Case "E_IfFalse".
+    subst.
+    inversion H1.
+  Case "E_WhileEnd".
+    subst.
+    inversion H0.
+    subst.
+    inversion H.
+  Case "E_WhileLoop".
+    Admitted.
 (** [] *)
 
 Fixpoint no_whiles (c : com) : bool :=
@@ -2374,6 +2554,7 @@ Fixpoint no_whiles (c : com) : bool :=
   | IFB _ THEN ct ELSE cf FI => andb (no_whiles ct) (no_whiles cf)
   | WHILE _ DO _ END  => false
   end.
+
 
 (*  **** Exercise: 2 stars, optional (no_whilesR) *)
 (** **** 練習問題: ★★, optional (no_whilesR) *)
@@ -2387,13 +2568,42 @@ Fixpoint no_whiles (c : com) : bool :=
     さらに、それが [no_whiles] と等価であることを示しなさい。*)
 
 Inductive no_whilesR: com -> Prop :=
+  | nw_skip : no_whilesR (CSkip)
+  | nw_ass : forall x a, no_whilesR (CAss x a)
+  | nw_seq : forall c1 c2, no_whilesR c1 -> no_whilesR c2 -> no_whilesR (CSeq c1 c2)
+  | nw_if : forall b c1 c2, no_whilesR c1 -> no_whilesR c2 -> no_whilesR (CIf b c1 c2)
  (* FILL IN HERE *)
   .
+
+Tactic Notation "nw_cases" tactic(first) ident(c) :=
+  first;
+  [ Case_aux c "SKIP" | Case_aux c "::=" | Case_aux c ";"
+  | Case_aux c "IFB" ].
 
 Theorem no_whiles_eqv:
    forall c, no_whiles c = true <-> no_whilesR c.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros c. split.
+  Case "->".
+    intros Hnw.
+    com_cases (induction c) SCase; try (
+      simpl in Hnw;
+      symmetry in Hnw;
+      apply andb_true_eq in Hnw;
+      destruct Hnw;
+      symmetry in H;
+      symmetry in H0;
+      constructor; try apply IHc1; try apply IHc2; try assumption); try constructor.
+    SCase "WHILE".
+      inversion Hnw.
+  Case "<-".
+    intros Hnw.
+    com_cases (induction c) SCase; try reflexivity; try (
+      simpl;
+      inversion Hnw;
+      apply andb_true_intro;
+      split; try apply IHc1; try apply IHc2; assumption).
+  Qed.
 (** [] *)
 
 (*  **** Exercise: 4 stars, optional (no_whiles_terminating) *)
@@ -2404,7 +2614,22 @@ Proof.
     これを定理として記述し、証明しなさい。*)
 (*  (Use either [no_whiles] or [no_whilesR], as you prefer.) *)
 (** ([no_whiles] と [no_whilesR] のどちらでも好きなほうを使いなさい。) *)
-
+Theorem no_while_stop : forall c st,
+  no_whilesR c ->
+  exists st',
+  exists i,
+  ceval_step st c i = Some st'.
+Proof.
+  intros c st Hnw.
+  com_cases (induction c) Case.
+  Case "SKIP".
+    exists st. exists 1. reflexivity.
+  Case "::=".
+    exists (update st i (aeval st a)).
+    exists 1.
+    reflexivity.
+  Case ";".
+    Admitted.
 (* FILL IN HERE *)
 (** [] *)
 
@@ -2543,7 +2768,53 @@ Qed.
 Definition ss_invariant (x:nat) (z:nat) (st:state) :=
   minus (st Z) (st X) = minus z x.
 
-(* FILL IN HERE *)
+Theorem ss_loop_preserves_invariant : forall st st' x z,
+     ss_invariant x z st ->
+     st X <> 0 ->
+     subtract_slowly_body / st || st' ->
+     ss_invariant x z st'.
+Proof.
+  intros st st' x z H HXneq0 Hce.
+  remember subtract_slowly_body as c.
+
+  ceval_cases (inversion Hce) Case; subst; clear Hce; try assumption; try (inversion H2; subst).
+  Case "E_Ass".
+    inversion H1.
+  Case "E_Seq".
+    inversion H2; subst; clear H2.
+    inversion H0; subst; clear H0.
+    inversion H1; subst; clear H1.
+    unfold ss_invariant.
+    unfold update.
+    simpl.
+    unfold ss_invariant in H.
+    omega.
+  Case "E_WhileLoop".
+    inversion H3.
+  Case "E_WhileLoop".
+    inversion H3. Qed.
+
+Theorem ss_correct : forall x z st st',
+     ss_invariant x z st ->
+     subtract_slowly / st || st' ->
+     ss_invariant x z st'.
+Proof.
+  intros x z st st' H Hce.
+  (*generalize dependent z.
+  generalize dependent x.*)
+  remember subtract_slowly as c.
+  ceval_cases (induction Hce) Case;
+    inversion Heqc; subst;
+    try (intros; assumption).
+  Case "E_WhileLoop".
+    apply IHHce2; try assumption.
+    apply ss_loop_preserves_invariant with (st:=st); try assumption.
+    intros Contra.
+    simpl in H0.
+    symmetry in H0.
+    apply negb_sym in H0.
+    apply beq_nat_false in H0.
+    apply H0. assumption. Qed.
 (** [] *)
 
 (* ####################################################### *)
