@@ -205,7 +205,7 @@ Theorem proj2 : forall P Q : Prop,
   P /\ Q -> Q.
 Proof.
   intros P Q H.
-  inversion H as [HP HQ].
+  inversion H as [_ HQ].
   apply HQ.  Qed.
 (** [] *)
 
@@ -236,6 +236,13 @@ Print and_commut.
      let H0 := match H with
                | conj HP HQ => conj Q P HQ HP
                end in H0
+     : forall P Q : Prop, P /\ Q -> Q /\ P *)
+(* and_commut = 
+fun (P Q : Prop) (H : P /\ Q) =>
+(fun H0 : Q /\ P => H0)
+  match H with
+  | conj HP HQ => (fun (HP0 : P) (HQ0 : Q) => conj Q P HQ0 HP0) HP HQ
+  end
      : forall P Q : Prop, P /\ Q -> Q /\ P *)
 
 (*  **** Exercise: 2 stars (and_assoc) *)
@@ -306,6 +313,13 @@ Definition conj_fact : forall P Q R, P /\ Q -> Q /\ R -> P /\ R :=
     match H1, H2 with
       | conj HP HQ, conj HQ' HR => conj P R HP HR
     end.
+
+Lemma conj_fact' : forall P Q R, P /\ Q -> Q /\ R -> P /\ R.
+Proof.
+  refine (fun P Q R (PQ:P/\Q) (QR:Q/\R) => _).
+  refine (match PQ with conj HP HQ => _ end).
+  refine (match QR with conj HQ HR => _ end).
+  split; assumption. Qed.
 (** [] *)
 
 (** ** Iff （両含意）*)
@@ -386,7 +400,7 @@ Proof.
  *)
 
 Definition MyProp_iff_ev : forall n, MyProp n <-> ev n :=
-  (* FILL IN HERE *) admit.
+  fun n => (conj (MyProp n -> ev n) (ev n -> MyProp n) (ev_MyProp n) (MyProp_ev n)).
 (** [] *)
 
 (*  Some of Coq's tactics treat [iff] statements specially, thus
@@ -970,20 +984,6 @@ Proof.
   apply HPQ.
   apply HP.
   Qed.
-
-Theorem implies_to_or__classic :
-  implies_to_or -> classic.
-Proof.
-  unfold implies_to_or.
-  unfold classic.
-  unfold not.
-  intros HIO P HNNP.
-  destruct HIO with (P) P.
-      apply id.
-    apply ex_falso_quodlibet.
-    apply HNNP.
-    apply H.
-  apply H. Qed.
 
 (** [] *)
 
@@ -1653,7 +1653,6 @@ Inductive next_even (n:nat) : nat -> Prop :=
 (** 二つの自然数のペア同士の間に成り立つ帰納的な関係 [total_relation] を
     定義しなさい。 *)
 
-(* FILL IN HERE *)
 Inductive total_relation : nat -> nat -> Prop :=
   nat_pair : forall n m:nat, total_relation n m.
 (** [] *)
@@ -1665,7 +1664,6 @@ Inductive total_relation : nat -> nat -> Prop :=
 (** 自然数の間では決して成り立たない関係 [empty_relation] を帰納的に
     定義しなさい。 *)
 
-(* FILL IN HERE *)
 Inductive empty_relation : nat -> nat -> Prop := .
 (** [] *)
 
@@ -1697,7 +1695,6 @@ Inductive R : nat -> nat -> nat -> Prop :=
       would the set of provable propositions change?  Briefly (1
       sentence) explain your answer.
 
-(* FILL IN HERE *)
 []
 *)
 (**  - 次の命題のうち、この関係を満たすと証明できると言えるのはどれでしょうか。
@@ -1709,7 +1706,6 @@ Inductive R : nat -> nat -> nat -> Prop :=
     - この関係 [R] の定義からコンストラクタ [c4] を取り除くと、証明可能な命題の範囲はどのように変わるでしょうか？端的に（１文で）説明しなさい。
 
 
-(* FILL IN HERE *)
     - [R 1 1 2] は証明できる。
     - [c5]を取り除いてもかわらない
     - [c4]を取り除いてもかわらない
@@ -1801,7 +1797,6 @@ Proof.
       apply IHl'.
       rewrite plus_n_Sm.
       reflexivity. Qed.
-(* FILL IN HERE *)
 (** [] *)
 
 End R.
@@ -1966,7 +1961,6 @@ Proof.
     [Fixpoint] で書くようなものではありません。）
  *)
 
-(* FILL IN HERE *)
 Inductive merged {X: Type} : list X -> list X -> list X -> Prop :=
   | merged_nil : merged [] [] []
   | merged_left : forall (x: X) (l m n: list X), merged l m n -> merged (x::l) m (x::n)
