@@ -2767,17 +2767,50 @@ Fixpoint leaves (t: tree nat) :=
       | node t1 t2 => leaves t1 + leaves t2
   end.
 
+Theorem ble_trans : forall n m l,
+  ble_nat n m = true ->
+  ble_nat m l = true ->
+  ble_nat n l = true.
+Proof.
+  intros n m l Hnm Hml.
+  generalize dependent m.
+  generalize dependent n.
+  induction l; intros.
+    destruct m.
+      assumption.
+    simpl in Hml.
+    inversion Hml.
+  destruct m.
+    destruct n.
+      assumption.
+    inversion Hnm.
+  destruct n.
+    reflexivity.
+  simpl in *.
+  apply IHl with m; assumption.
+Qed.
+  
+  
 Theorem p_property : forall (t:tree nat) (n:nat),
   p t n -> ble_nat (leaves t) n = true.
 Proof.
   intros t n H.
   induction H.
       constructor.
-    inversion H; try assumption.
-      subst.
-      simpl.
-      simpl in IHp1.
-      Admitted.
+    simpl.
+    apply ble_trans with (n1 + leaves t2).
+      rewrite plus_comm.
+      rewrite (plus_comm n1 _).
+      apply plus_ble_compat_l; assumption.
+    apply plus_ble_compat_l; assumption.
+  apply ble_trans with n.
+    assumption.
+  replace (S n) with (n + 1).
+    replace n with (n + 0) at 1.
+      apply plus_ble_compat_l.
+      reflexivity.
+    apply plus_comm.
+  apply plus_comm. Qed.
 (** [] *)
 
 End P.
@@ -3500,6 +3533,16 @@ Proof.
   apply IHl'.
   assumption. Qed.
 
+Theorem subseq_app' : forall (X:Type) (l1 l2 l3:list X),
+  subseq l1 l2 ->
+  subseq l1 (l2 ++ l3).
+Proof.
+  intros X l1 l2 l3 H.
+  induction H.
+      apply subseq_nihil.
+    simpl. constructor. assumption.
+  simpl. constructor. assumption. Qed.
+
 Theorem subseq_trans : forall (X:Type) (l1 l2 l3:list X),
   subseq l1 l2 ->
   subseq l2 l3 ->
@@ -3696,6 +3739,3 @@ is provable.
 *)
 
 (** [] *)
-
-
-
