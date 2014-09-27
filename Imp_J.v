@@ -2234,7 +2234,8 @@ Proof.
         SSCase "r = false".
           inversion H1.
           apply E_WhileEnd.
-          rewrite Heqr. subst. reflexivity.  Qed.
+          rewrite Heqr. subst. reflexivity.
+Qed.
 
 (*  **** Exercise: 4 stars (ceval_step__ceval_inf) *)
 (** **** 練習問題: ★★★★ (ceval_step__ceval_inf) *)
@@ -2497,7 +2498,6 @@ Proof.
 (*  State and prove a specification of the XtimesYinZ Imp program. *)
 (** XtimesYinZ の Imp プログラムの仕様を書いて証明しなさい。*)
 
-(* FILL IN HERE *)
 Theorem XtimesYinZ_spec : forall st n m st',
   st X = n ->
   st Y = m ->
